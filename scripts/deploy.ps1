@@ -18,9 +18,17 @@ Get-Config -file ".\config\pi.config" #TODO: path should be relative to script p
 # - ip address of the raspberry pi
 # - ssh user and password. TODO: use ssh key
 # - local and remote paths?
-Write-Host $pi__address
-# copy the docker-compose.yml file to the pi using scp
+Write-Host "$($pi__sshUser)@$($pi__address):$($pi__homeFolder)"
+# copy the docker-compose.yml, env files and volumes to the pi using scp
+& ssh -i $pi__sshItentityFile "$($pi__sshUser)@$($pi__address)" "mkdir -p $($pi__homeFolder)/config/containers && mkdir -p $($pi__homeFolder)/volumes"
+& scp -i $pi__sshItentityFile .\docker-compose.yml "$($pi__sshUser)@$($pi__address):$($pi__homeFolder)/"
+& scp -i $pi__sshItentityFile .\config\containers\*.env "$($pi__sshUser)@$($pi__address):$($pi__homeFolder)/config/containers/"
+& scp -i $pi__sshItentityFile -r .\volumes\* "$($pi__sshUser)@$($pi__address):$($pi__homeFolder)/volumes/"
 
 # run a docker-compose down && docker-compose up -d on the raspberry pi
+& ssh -i $pi__sshItentityFile "$($pi__sshUser)@$($pi__address)" "cd $($pi__homeFolder) && docker-compose down && docker-compose up -d"
+
+# run docker exec mosquitto mosquitto_passwd -b /mosquitto/pwfile/pwfile $MOSQUITTO__MQTTUSERNAME $MOSQUITTO__MQTTPASSWORD
+#& ssh -i $pi__sshItentityFile "$($pi__sshUser)@$($pi__address)" "docker exec mosquitto mosquitto_passwd -b /mosquitto/pwfile/pwfile $MOSQUITTO__MQTTUSERNAME $MOSQUITTO__MQTTPASSWORD"
 
 Write-Host "Finished running the deploy.ps1 file ..."

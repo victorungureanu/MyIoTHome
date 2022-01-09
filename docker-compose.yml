@@ -1,0 +1,121 @@
+version: '3.6'
+services:
+  home_assistant:
+    container_name: home_assistant
+    image: homeassistant/home-assistant:stable
+    restart: unless-stopped
+    ports:
+      - "8123:8123"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./volumes/home_assistant:/config
+    network_mode: host
+
+  portainer-ce:
+    container_name: portainer-ce
+    image: portainer/portainer-ce
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./volumes/portainer-ce/data:/data
+
+  zigbee2mqtt_assistant:
+    container_name: zigbee2mqtt_assistant
+    image: carldebilly/zigbee2mqttassistant
+    restart: unless-stopped
+    ports:
+      - "8880:80"
+    env_file:
+      - ./config/containers/zigbee2mqtt_assistant.env
+    depends_on:
+      - influxdb
+      - mosquitto
+    networks:
+      - mith_nw
+
+  mosquitto:
+    container_name: mosquitto
+    image: eclipse-mosquitto
+    restart: unless-stopped
+    user: "1883"
+    ports:
+      - "1883:1883"
+    env_file:
+      - ./config/containers/mosquitto.env
+    volumes:
+      - ./volumes/mosquitto/data:/mosquitto/data
+      - ./volumes/mosquitto/log:/mosquitto/log
+      - ./volumes/mosquitto/pwfile:/mosquitto/pwfile
+      - ./volumes/mosquitto/config:/mosquitto/config:ro
+    networks:
+      - mith_nw
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    restart: unless-stopped
+    user: "0"
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_PATHS_DATA=/var/lib/grafana
+      - GF_PATHS_LOGS=/var/log/grafana
+    volumes:
+      - ./volumes/grafana/data:/var/lib/grafana
+      - ./volumes/grafana/log:/var/log/grafana
+    networks:
+      - mith_nw
+
+  influxdb:
+    container_name: influxdb
+    image: "influxdb:1.8.4"
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    env_file:
+      - ./config/containers/influxdb.env
+    volumes:
+      - ./volumes/influxdb/data:/var/lib/influxdb
+      - ./backups/influxdb/db:/var/lib/influxdb/backup
+    networks:
+      - mith_nw
+
+  zigbee2mqtt:
+    container_name: zigbee2mqtt
+    image: koenkk/zigbee2mqtt
+    volumes:
+      - ./volumes/zigbee2mqtt/data:/app/data
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0
+    restart: unless-stopped
+    network_mode: host
+
+  telegraf:
+    container_name: telegraf
+    image: telegraf:1.21.2
+    restart: unless-stopped
+    env_file:
+      - ./config/containers/telegraf.env
+    ports:
+      - "8092:8092/udp"
+      - "8094:8094/tcp"
+      - "8125:8125/udp"
+    volumes:
+      - ./volumes/telegraf:/etc/telegraf
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - influxdb
+      - mosquitto
+    networks:
+      - mith_nw
+networks:
+  mith_nw:
+    name: MyIoTHome_Net
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.77.60.0/24
