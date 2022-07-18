@@ -16,7 +16,7 @@ Write-Host "Running the deploy.ps1 file ..."
 # load some configuration
 Get-Config -file ".\config\pi.config" #TODO: path should be relative to script path regardless of current directory
 # - ip address of the raspberry pi
-# - ssh user and password. TODO: use ssh key
+# - path to ssh key
 # - local and remote paths?
 Write-Host "$($pi__sshUser)@$($pi__address):$($pi__homeFolder)"
 # copy the docker-compose.yml, env files and volumes to the pi using scp

@@ -9,7 +9,8 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ./volumes/home_assistant:/config
-    network_mode: host
+    networks:
+      - mith_nw
 
   portainer-ce:
     container_name: portainer-ce
@@ -21,7 +22,9 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./volumes/portainer-ce/data:/data
-
+    networks:
+          - mith_nw
+          
   zigbee2mqtt_assistant:
     container_name: zigbee2mqtt_assistant
     image: carldebilly/zigbee2mqttassistant
@@ -91,7 +94,8 @@ services:
     devices:
       - /dev/ttyACM0:/dev/ttyACM0
     restart: unless-stopped
-    network_mode: host
+    networks:
+      - mith_nw
 
   telegraf:
     container_name: telegraf

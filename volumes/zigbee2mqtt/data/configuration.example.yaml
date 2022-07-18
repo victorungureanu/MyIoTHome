@@ -1,0 +1,9 @@
+homeassistant: true
+permit_join: true
+mqtt:
+  base_topic: zigbee2mqtt
+  server: 'mqtt://mosquitto:1883'
+  user: [your MQTT username]
+  password: [your MQTT password]
+serial:
+  port: /dev/ttyACM0
